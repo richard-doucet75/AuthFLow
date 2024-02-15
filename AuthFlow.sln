@@ -1,8 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthFlow", "AuthFlow\AuthFlow.csproj", "{63C5E1EF-3232-408B-99C4-3A9E874B2C1A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthFlow.UnitTests", "AuthFlow.UnitTests\AuthFlow.UnitTests.csproj", "{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{63C5E1EF-3232-408B-99C4-3A9E874B2C1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63C5E1EF-3232-408B-99C4-3A9E874B2C1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63C5E1EF-3232-408B-99C4-3A9E874B2C1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63C5E1EF-3232-408B-99C4-3A9E874B2C1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

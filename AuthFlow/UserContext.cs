@@ -1,119 +1,124 @@
 ﻿namespace AuthFlow
 {
     /// <summary>
-    /// Provides a fluent interface for building a user context with required permissions.
+    /// Defines the configuration interface for setting up a user context with specific permissions and actions.
     /// <example>
-    /// Usage example:
+    /// Using async lambda expression to configure access 
     /// <code>
-    /// var userContext = UserContext.Create(userPermissionsRepository, userId)
-    ///                               .RequirePermission("READ_ACCESS")
-    ///                               .OnPermissionGranted(async () => await PerformReadOperation())
-    ///                               .OnPermissionDenied(async () => Console.WriteLine("Access Denied"))
-    ///                               .OnException(async (ex) => Console.WriteLine($"Error: {ex.Message}"))
-    ///                               .Execute();
+    /// Assume userPermissionsRepository is an instance of IUserPermissionsRepository and userId is the current user's GUID.
+    /// 
+    /// var userContext = AuthFlow.UserContext.Create(userPermissionsRepository, userId)
+    ///     .RequirePermission("ADMIN_ACCESS")
+    ///     .OnPermissionGranted(async cancellationToken =>
+    ///     {
+    ///         Console.WriteLine("Permission Granted. Performing admin operations.");
+    ///         // Perform operation that requires admin access.
+    ///     })
+    ///     .OnPermissionDenied(async cancellationToken =>
+    ///     {
+    ///         Console.WriteLine("Permission Denied. Access to admin operations is not allowed.");
+    ///     })
+    ///     .OnException(async (exception, cancellationToken) =>
+    ///     {
+    ///         Console.WriteLine($"An error occurred: {exception.Message}");
+    ///     })
+    ///     .ExecuteAsync();
+    /// </code>
+    /// </example>
+    /// <example>
+    /// Using async Tasks expression to configure access
+    /// <code>
+    ///    public async Task HandleAdminOperations(CancellationToken cancellationToken) {
+    ///     // Complex admin operations logic here.
+    ///    }
+    ///
+    ///    public async Task HandlePermissionDeniedOperations(CancellationToken cancellationToken) {
+    ///     // Logic for handling denied permissions.
+    ///    }
+    ///
+    ///   var userContext = AuthFlow.UserContext.Create(userPermissionsRepository, userId)
+    ///     .RequirePermission("ADMIN_ACCESS")
+    ///     .OnPermissionGranted(async cancellationToken => await HandleAdminOperations(cancellationToken))
+    ///     .OnPermissionDenied(async cancellationToken => await HandlePermissionDeniedOperations(cancellationToken));
+    /// </code>
+    /// </example>
+    /// <example>
+    /// Configuring Handling cancellation while executing
+    /// 
+    /// <code>
+    ///     .OnPermissionGranted(async cancellationToken => {
+    ///         while (longRunningCondition) {
+    ///             cancellationToken.ThrowIfCancellationRequested();
+    ///             // Long-running operation logic here.
+    ///         }
+    ///     })
+    ///
+    ///
+    /// </code>
+    /// <code>
+    ///     .OnOperationCancelled(async (exception, cancellationToken) => {
+    ///         Log.Error(exception, "An error occurred during permission check or action execution.");
+    ///         // Additional exception handling logic here.
+    ///     })
     /// </code>
     /// </example>
     /// </summary>
-    public interface IUserContextBuilder
+    public interface IUserContextConfigurator
     {
         /// <summary>
         /// Specifies the permission required for the user context.
         /// </summary>
         /// <param name="permissionName">The name of the required permission.</param>
-        /// <returns>A builder for configuring the action taken when the permission is granted.</returns>
-        IPermissionActionBuilder RequirePermission(string permissionName);
-    }
+        /// <returns>The same configurator instance for chaining further configuration.</returns>
+        IUserContextConfigurator RequirePermission(string permissionName);
 
-    /// <summary>
-    /// Configures the action to be taken when the specified permission is granted.
-    /// </summary>
-    public interface IPermissionActionBuilder
-    {
         /// <summary>
-        /// Defines the action to be executed when the permission is granted.
+        /// Defines the action to be executed when the specified permission is granted.
         /// </summary>
-        /// <param name="action">The action to execute, encapsulated in a Func&lt;Task&gt;.</param>
-        /// <returns>A builder for configuring the action taken when the permission is denied.</returns>
-        IPermissionGrantedActionBuilder OnPermissionGranted(Func<CancellationToken, Task> action);
-    }
+        /// <param name="action">The action to execute, encapsulated in a <see cref="Func{CancellationToken, Task}"/>.</param>
+        /// <returns>The same configurator instance for chaining further configuration.</returns>
+        IUserContextConfigurator OnPermissionGranted(Func<CancellationToken, Task> action);
 
-    /// <summary>
-    /// Configures the action to be taken when the specified permission is denied.
-    /// </summary>
-    public interface IPermissionGrantedActionBuilder
-    {
         /// <summary>
-        /// Defines the action to be executed when the permission is denied.
+        /// Defines the action to be executed when the specified permission is denied.
         /// </summary>
-        /// <param name="action">The action to execute, encapsulated in a Func&lt;Task&gt;.</param>
-        /// <returns>A builder for configuring the exception handling action.</returns>
-        IPermissionDeniedActionBuilder OnPermissionDenied(Func<CancellationToken, Task> action);
-    }
+        /// <param name="action">The action to execute, encapsulated in a <see cref="Func{CancellationToken, Task}"/>.</param>
+        /// <returns>The same configurator instance for chaining further configuration.</returns>
+        IUserContextConfigurator OnPermissionDenied(Func<CancellationToken, Task> action);
 
-    /// <summary>
-    /// Configures the action to be taken when an OperationCancellationException exception occurs.
-    /// </summary>
-    public interface IPermissionDeniedActionBuilder
-    {
         /// <summary>
-        /// Defines the action to be executed when an OperationCancelledException exception occurs.
+        /// Defines the action to be executed when the operation is cancelled.
         /// </summary>
-        /// <param name="action">The action to execute, encapsulated in a Func&lt;Task&gt; that receives an Exception.</param>
-        /// <returns>A finalizer for executing the configured user context.</returns>
-        IOperationCancelledActionBuilder OnOperationCancelled(Func<Exception, CancellationToken, Task> action);
-    }
+        /// <param name="action">The action to execute, encapsulated in a <see cref="Func{CancellationToken, Task}"/>.</param>
+        /// <returns>The same configurator instance for chaining further configuration.</returns>
+        IUserContextConfigurator OnOperationCancelled(Func<CancellationToken, Task> action);
 
-    /// <summary>
-    /// Configures the action to be taken when an exception occurs during the permission check.
-    /// </summary>
-    public interface IOperationCancelledActionBuilder
-    {
         /// <summary>
-        /// Defines the action to be executed when an exception occurs.
+        /// Defines the action to be executed when an exception occurs during the permission check or action execution.
         /// </summary>
-        /// <param name="action">The action to execute, encapsulated in a Func&lt;Task&gt; that receives an Exception.</param>
-        /// <returns>A finalizer for executing the configured user context.</returns>
-        IUserContextFinalizer OnException(Func<Exception, CancellationToken, Task> action);
-    }
+        /// <param name="action">The action to execute, encapsulated in a <see cref="Func{Exception, CancellationToken, Task}"/>.</param>
+        /// <returns>The same configurator instance for chaining further configuration.</returns>
+        IUserContextConfigurator OnException(Func<Exception?, CancellationToken, Task> action);
 
-    /// <summary>
-    /// Finalizes the configuration of the user context and executes the permission check.
-    /// </summary>
-    public interface IUserContextFinalizer
-    {
         /// <summary>
         /// Executes the configured user context, performing the permission check and triggering the appropriate actions.
         /// </summary>
+        /// <param name="cancellationToken">A token for cancelling the operation.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         Task ExecuteAsync(CancellationToken cancellationToken = default);
     }
 
     /// <summary>
-    /// Represents a concrete implementation of the user context builder interfaces for configuring and executing a user context with specific permission requirements.
-    /// <example>
-    /// Usage example for requiring "WRITE_ACCESS" permission:
-    /// <code>
-    /// await UserContext.Create(userPermissionsRepository, userId)
-    ///                   .RequirePermission("WRITE_ACCESS")
-    ///                   .OnPermissionGranted(async () => await PerformWriteOperation())
-    ///                   .OnPermissionDenied(async () => Console.WriteLine("Access Denied"))
-    ///                   .OnException(async (ex) => Console.WriteLine($"Error: {ex.Message}"))
-    ///                   .Execute();
-    /// </code>
-    /// </example>
-    /// <remarks>
-    /// This class provides a seamless and flexible way to define and enforce permission checks,
-    /// allowing for custom actions based on the outcome of these checks.
-    /// </remarks>
+    /// Represents a concrete implementation of the <see cref="IUserContextConfigurator"/> for configuring and executing a user context with specific permission requirements.
     /// </summary>
-    public sealed class UserContext : IUserContextBuilder, IPermissionActionBuilder, 
-        IPermissionGrantedActionBuilder, IPermissionDeniedActionBuilder, IUserContextFinalizer
+    public sealed class UserContext : IUserContextConfigurator
     {
         private readonly IUserPermissionsRepository _userPermissionsRepository;
         private readonly Guid _userId;
         private string? _permissionRequired;
         private Func<CancellationToken, Task>? _onPermissionGrantedAsync;
         private Func<CancellationToken, Task>? _onPermissionDeniedAsync;
+        private Func<CancellationToken, Task>? _onCancelledAsync;
         private Func<Exception, CancellationToken, Task>? _onExceptionAsync;
 
         private UserContext(IUserPermissionsRepository userPermissionsRepository, Guid userId)
@@ -122,47 +127,88 @@
             _userId = userId;
         }
 
-        public static IUserContextBuilder Create(IUserPermissionsRepository userPermissionsRepository, Guid userId)
+        /// <summary>
+        /// Creates a new instance of <see cref="UserContext"/> with the specified permissions repository and user identifier.
+        /// </summary>
+        /// <param name="userPermissionsRepository">The repository to check user permissions.</param>
+        /// <param name="userId">The identifier of the user.</param>
+        /// <returns>A new <see cref="IUserContextConfigurator"/> instance.</returns>
+        public static IUserContextConfigurator Create(IUserPermissionsRepository userPermissionsRepository, Guid userId)
         {
             return new UserContext(userPermissionsRepository, userId);
         }
 
-        public IPermissionActionBuilder RequirePermission(string permissionName)
+        public IUserContextConfigurator RequirePermission(string permissionName)
         {
+            if(_permissionRequired != null)
+                throw new UserContextConfigurationException($"{nameof(RequirePermission)} has already been configured.");
+            
             _permissionRequired = permissionName;
             return this;
         }
 
-        public IPermissionGrantedActionBuilder OnPermissionGranted(Func<CancellationToken, Task> action)
+        public IUserContextConfigurator OnPermissionGranted(Func<CancellationToken, Task> action)
         {
+            if(_onPermissionGrantedAsync != null)
+                throw new UserContextConfigurationException($"{nameof(OnPermissionGranted)} has already been configured.");
+            
             _onPermissionGrantedAsync = action ?? throw new ArgumentNullException(nameof(action));
             return this;
         }
 
-        public IPermissionDeniedActionBuilder OnPermissionDenied(Func<CancellationToken, Task> action)
+        public IUserContextConfigurator OnPermissionDenied(Func<CancellationToken, Task> action)
         {
+            if(_onPermissionDeniedAsync != null)
+                throw new UserContextConfigurationException($"{nameof(OnPermissionDenied)} has already been configured.");
+            
             _onPermissionDeniedAsync = action ?? throw new ArgumentNullException(nameof(action));
             return this;
         }
-        
-        public IUserContextFinalizer OnException(Func<Exception, CancellationToken, Task> action)
+
+        public IUserContextConfigurator OnOperationCancelled(Func<CancellationToken, Task> action)
         {
+            if(_onCancelledAsync != null)
+                throw new UserContextConfigurationException($"{nameof(OnOperationCancelled)} has already been configured.");
+            
+            _onCancelledAsync = action;
+            return this;
+        }
+
+        public IUserContextConfigurator OnException(Func<Exception?, CancellationToken, Task> action)
+        {
+            if(_onExceptionAsync != null)
+                throw new UserContextConfigurationException($"{nameof(OnException)} has already been configured.");
+            
             _onExceptionAsync = action ?? throw new ArgumentNullException(nameof(action));
             return this;
         }
 
+        /// <summary>
+        /// Executes the configured user context, performing the permission check and triggering the appropriate actions based on the outcome.
+        /// This method includes checks for cancellation at key points in the execution flow and ensures that configured actions for permission granted,
+        /// permission denied, operation cancellation, and exceptions are invoked as appropriate.
+        /// </summary>
+        /// <param name="cancellationToken">A token for cancelling the operation. This token is checked before starting the operation,
+        /// after permission checks, and after executing any configured actions to allow for graceful cancellation of the operation.</param>
+        /// <returns>A task representing the asynchronous operation. This task may complete as cancelled if the operation is cancelled.</returns>
+        /// <exception cref="OperationCanceledException">Thrown if the operation is cancelled. This exception is thrown after invoking any configured cancellation action,
+        /// allowing for custom cancellation logic to be executed.</exception>
+        /// <exception cref="UserContextConfigurationException">Thrown if the user context is misconfigured, such as missing required permissions or actions.</exception>
+        /// <exception cref="Exception">Any unhandled exceptions that occur during the execution of the permission check or configured actions. If an exception handling action is configured,
+        /// it is invoked with the exception; otherwise, the exception is rethrown.</exception>
         public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            if(string.IsNullOrWhiteSpace(_permissionRequired)
-               || _onPermissionGrantedAsync == null
-               || _onPermissionDeniedAsync == null
-               || _onExceptionAsync == null)
-            {
-                throw CreateConfigurationException();
-            }
-
             try
             {
+                // Check for configuration issues before starting.
+                if (string.IsNullOrWhiteSpace(_permissionRequired) 
+                    || _onPermissionGrantedAsync == null 
+                    || _onPermissionDeniedAsync == null)
+                {
+                    throw CreateConfigurationException();
+                }
+                
+                cancellationToken.ThrowIfCancellationRequested();
                 if (await _userPermissionsRepository.VerifyUserPermission(_userId, _permissionRequired, cancellationToken))
                 {
                     await _onPermissionGrantedAsync(cancellationToken);
@@ -171,38 +217,51 @@
                 {
                     await _onPermissionDeniedAsync(cancellationToken);
                 }
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            catch (OperationCanceledException)
+            {
+                if (_onCancelledAsync != null)
+                {
+                    await _onCancelledAsync.Invoke(cancellationToken);
+                }
+                else
+                {
+                    throw;
+                }
             }
             catch (Exception ex)
             {
-                await _onExceptionAsync(ex, cancellationToken);
+                if (_onExceptionAsync != null)
+                {
+                    await _onExceptionAsync.Invoke(ex, cancellationToken);
+                }
+                else
+                {
+                    throw;
+                }
             }
         }
-
+        
         private Exception CreateConfigurationException()
         {
-            var configurations = new[]
+            var missingConfigurations = new List<string>();
+            if (string.IsNullOrWhiteSpace(_permissionRequired)) missingConfigurations.Add("Required Permission");
+            if (_onPermissionGrantedAsync == null) missingConfigurations.Add("On Permission Granted Async");
+            if (_onPermissionDeniedAsync == null) missingConfigurations.Add("On Permission Denied Async");
+
+            if (missingConfigurations.Any())
             {
-                ("Required Permission", !string.IsNullOrWhiteSpace(_permissionRequired)),
-                ("On Permission Granted Async", _onPermissionGrantedAsync != null),
-                ("On Permission Denied Async", _onPermissionDeniedAsync != null),
-                ("On Exception Async", _onExceptionAsync != null)
-            };
+                return new UserContextConfigurationException(
+                    $"UserContext is missing the following configurations: {string.Join(", ", missingConfigurations)}. Try using the fluent interface to avoid configuration issues.");
+            }
 
-            var missingConfigurations = string.Join(", ",
-                configurations.Where(c => !c.Item2)
-                    .Select(c => c.Item1));
-
-            return new UserContextConfigurationException(
-                @$"UserContext is missing the following configurations: {missingConfigurations}. " +
-                "Try using the fluent interface to avoid configuration issues.");
+            return new InvalidOperationException("Invalid UserContext configuration.");
         }
 
-        private class UserContextConfigurationException : Exception
+        public class UserContextConfigurationException : Exception
         {
-            public UserContextConfigurationException(string message)
-                : base(message)
-            {
-            }
+            public UserContextConfigurationException(string message) : base(message) { }
         }
     }
 }

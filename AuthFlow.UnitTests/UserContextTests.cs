@@ -1,6 +1,6 @@
 namespace AuthFlow.UnitTests;
 
-using static AuthFlow.UserContext;
+using static UserContext;
 
 [Trait("Category", "Unit Tests")]
 public class UserContextTests
