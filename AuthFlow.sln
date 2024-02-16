@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthFlow", "AuthFlow\AuthFl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthFlow.UnitTests", "AuthFlow.UnitTests\AuthFlow.UnitTests.csproj", "{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthFlow.Abstractions", "AuthFlow.Abstractions\AuthFlow.Abstractions.csproj", "{4EE855C6-A14B-42BB-B668-6ACCF2ABCF9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9FCBF8FE-4CBE-4CBC-B134-60B0DD0FB4FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EE855C6-A14B-42BB-B668-6ACCF2ABCF9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EE855C6-A14B-42BB-B668-6ACCF2ABCF9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EE855C6-A14B-42BB-B668-6ACCF2ABCF9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EE855C6-A14B-42BB-B668-6ACCF2ABCF9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

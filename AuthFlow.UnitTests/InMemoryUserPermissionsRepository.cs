@@ -1,4 +1,4 @@
-namespace AuthFlow.UnitTests;
+namespace AsyncAuthFlowCore.UnitTests;
 
 public class InMemoryUserPermissionsRepository : IUserPermissionsRepository
 {

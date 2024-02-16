@@ -1,4 +1,4 @@
-namespace AuthFlow;
+namespace AsyncAuthFlowCore;
 
 /// <summary>
 /// Represents a repository for verifying user permissions.

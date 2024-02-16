@@ -7,6 +7,8 @@
 
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <AssemblyName>AsyncAuthFlowCore.UnitTests</AssemblyName>
+        <RootNamespace>AsyncAuthFlowCore.UnitTests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -23,6 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\AuthFlow.Abstractions\AuthFlow.Abstractions.csproj" />
       <ProjectReference Include="..\AuthFlow\AuthFlow.csproj" />
     </ItemGroup>
 
