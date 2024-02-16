@@ -15,7 +15,7 @@ AuthFlow is a versatile .NET library designed to streamline the authentication a
 To get started with AuthFlow, first install the package via NuGet:
 
 ```shell
-dotnet add package AuthFlow
+dotnet add package AsyncAuthFlowCore
 ```
 
 Then, you can configure a user context like so:
