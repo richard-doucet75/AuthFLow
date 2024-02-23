@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <PackageId>AsyncAuthFlowCore</PackageId>
-        <Version>2.0.1</Version>
+        <Version>3.0.0</Version>
         <Authors>Richard Doucet</Authors>
         <Description>AuthFlow simplifies user authentication and authorization in .NET applications with a fluent API for configuring user contexts. Easily define required permissions, manage access controls, and handle permission checks with asynchronous support. Ideal for developers seeking a streamlined, code-first approach to securing their applications.</Description>
         <TargetFramework>net7.0</TargetFramework>

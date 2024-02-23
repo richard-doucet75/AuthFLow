@@ -66,7 +66,7 @@
             return this;
         }
 
-        public IUserContextConfigurator OnException(Func<Exception?, CancellationToken, Task> action)
+        public IUserContextConfigurator OnException(Func<Exception, CancellationToken, Task> action)
         {
             if(_onExceptionAsync != null)
                 throw new UserContextConfigurationException($"{nameof(OnException)} has already been configured.");

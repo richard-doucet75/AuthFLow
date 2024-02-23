@@ -26,12 +26,4 @@ public class InMemoryUserPermissionsRepository : IUserPermissionsRepository
 
         _permissions[userId].Add(permissionName);
     }
-
-    public void RevokePermission(Guid userId, string permissionName)
-    {
-        if (_permissions.TryGetValue(userId, out var userPermissions))
-        {
-            userPermissions.Remove(permissionName);
-        }
-    }
 }

@@ -98,7 +98,7 @@ public interface IUserContextConfigurator
     /// </summary>
     /// <param name="action">The action to execute, encapsulated in a <see cref="Func{Exception, CancellationToken, Task}"/>.</param>
     /// <returns>The same configurator instance for chaining further configuration.</returns>
-    IUserContextConfigurator OnException(Func<Exception?, CancellationToken, Task> action);
+    IUserContextConfigurator OnException(Func<Exception, CancellationToken, Task> action);
 
     /// <summary>
     /// Executes the configured user context, performing the permission check and triggering the appropriate actions.
