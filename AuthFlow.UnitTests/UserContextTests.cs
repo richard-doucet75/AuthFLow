@@ -1,3 +1,5 @@
+using AsyncAuthFlowCore.Abstractions;
+
 namespace AsyncAuthFlowCore.UnitTests;
 
 
@@ -5,7 +7,7 @@ namespace AsyncAuthFlowCore.UnitTests;
 public class UserContextTests
 {
     private readonly InMemoryUserPermissionsRepository _repository = new();
-    private readonly Guid _userId = Guid.NewGuid();
+    private readonly string _userId = Guid.NewGuid().ToString();
 
     [Fact]
     public async Task PermissionGranted_ExecutesGrantedAction()
@@ -15,13 +17,13 @@ public class UserContextTests
 
         var userContext = UserContext.Create(_repository, _userId)
             .RequirePermission("READ")
-            .OnPermissionGranted(async _ =>
+            .OnPermissionGranted(async (_, _) =>
             {
                 wasCalled = true;
                 await Task.CompletedTask;
             })
-            .OnPermissionDenied(_ => Task.CompletedTask)
-            .OnException((_, _) => Task.CompletedTask);
+            .OnPermissionDenied( (_, _) => Task.CompletedTask)
+            .OnException((_, _, _) => Task.CompletedTask);
 
         await userContext.ExecuteAsync();
 
@@ -35,13 +37,13 @@ public class UserContextTests
 
         var userContext = UserContext.Create(_repository, _userId)
             .RequirePermission("WRITE")
-            .OnPermissionGranted(_ => Task.CompletedTask)
-            .OnPermissionDenied(async _ =>
+            .OnPermissionGranted((_, _) => Task.CompletedTask)
+            .OnPermissionDenied(async (_, _) =>
             {
                 wasCalled = true;
                 await Task.CompletedTask;
             })
-            .OnException((_, _) => Task.CompletedTask);
+            .OnException((_, _, _) => Task.CompletedTask);
 
         await userContext.ExecuteAsync();
 
@@ -57,7 +59,7 @@ public class UserContextTests
 
         var userContext = UserContext.Create(_repository, _userId)
             .RequirePermission("ANY")
-            .OnPermissionGranted(async c =>
+            .OnPermissionGranted(async (_, c) =>
             {
                 await Task.Run(() =>
                 {
@@ -70,13 +72,13 @@ public class UserContextTests
                     c.ThrowIfCancellationRequested();
                 }, c);
             })
-            .OnPermissionDenied(_ => Task.CompletedTask)
-            .OnOperationCancelled(async _ =>
+            .OnPermissionDenied((_, _) => Task.CompletedTask)
+            .OnOperationCancelled(async (_, _) =>
             {
                 wasCalled = true;
                 await Task.CompletedTask;
             })
-            .OnException((_, _) => Task.CompletedTask);
+            .OnException((_, _, _) => Task.CompletedTask);
 
         cancellationTokenSource.Cancel();
 
@@ -94,9 +96,9 @@ public class UserContextTests
 
         var userContext = UserContext.Create(_repository, _userId)
             .RequirePermission("READ")
-            .OnPermissionGranted(_ => Task.CompletedTask)
-            .OnPermissionDenied(_ => Task.CompletedTask)
-            .OnException(async (ex, _) =>
+            .OnPermissionGranted((_, _) => Task.CompletedTask)
+            .OnPermissionDenied((_, _) => Task.CompletedTask)
+            .OnException(async (ex,_, _) =>
             {
                 exceptionWasCalled = true;
                 capturedException = ex;
@@ -118,14 +120,14 @@ public class UserContextTests
 
         var userContext = UserContext.Create(_repository, _userId)
             .RequirePermission("READ")
-            .OnPermissionGranted(_ => Task.FromException(new Exception("Should not execute")))
-            .OnPermissionDenied(_ => Task.FromException(new Exception("Should not execute")))
-            .OnOperationCancelled(_ =>
+            .OnPermissionGranted((_, _) => Task.FromException(new Exception("Should not execute")))
+            .OnPermissionDenied((_, _) => Task.FromException(new Exception("Should not execute")))
+            .OnOperationCancelled((_, _) =>
             {
                 operationCancelledExecuted = true;
                 return Task.CompletedTask;
             })
-            .OnException((_, _) => Task.CompletedTask);
+            .OnException((_, _, _) => Task.CompletedTask);
 
         await userContext.ExecuteAsync(cancellationTokenSource.Token);
 
@@ -136,26 +138,26 @@ public class UserContextTests
     public void ConfiguringRequirePermissionTwice_ThrowsConfigurationException()
     {
         // Act & Assert
-        var exception = Assert.Throws<UserContext.UserContextConfigurationException>(() =>
+        var exception = Assert.Throws<UserContextConfigurationException>(() =>
         {
             UserContext.Create(_repository, _userId)
                 .RequirePermission("READ")
                 .RequirePermission("WRITE");
         });
 
-        Assert.Contains("has already been configured", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Required permission has already been configured", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
     
     [Fact]
     public void ConfiguringOnPermissionGrantedTwice_ThrowsConfigurationException()
     { 
         // Act & Assert
-        var exception = Assert.Throws<UserContext.UserContextConfigurationException>(() =>
+        var exception = Assert.Throws<UserContextConfigurationException>(() =>
         {
             UserContext.Create(_repository, _userId)
                 .RequirePermission("READ")
-                .OnPermissionGranted(_ => Task.CompletedTask) // First configuration
-                .OnPermissionGranted(_ => Task.CompletedTask);
+                .OnPermissionGranted((_, _) => Task.CompletedTask) // First configuration
+                .OnPermissionGranted((_, _) => Task.CompletedTask);
         });
 
         Assert.Contains("OnPermissionGranted has already been configured", exception.Message, StringComparison.OrdinalIgnoreCase);
@@ -165,12 +167,12 @@ public class UserContextTests
     public void ConfiguringOnPermissionDeniedTwice_ThrowsConfigurationException()
     {
         // Act & Assert
-        var exception = Assert.Throws<UserContext.UserContextConfigurationException>(() =>
+        var exception = Assert.Throws<UserContextConfigurationException>(() =>
         {
             UserContext.Create(_repository, _userId)
                 .RequirePermission("READ")
-                .OnPermissionDenied(_ => Task.CompletedTask) // First configuration
-                .OnPermissionDenied(_ => Task.CompletedTask);
+                .OnPermissionDenied((_, _) => Task.CompletedTask) // First configuration
+                .OnPermissionDenied((_, _) => Task.CompletedTask);
         });
 
         Assert.Contains("OnPermissionDenied has already been configured", exception.Message, StringComparison.OrdinalIgnoreCase);
@@ -180,12 +182,12 @@ public class UserContextTests
     public void ConfiguringOnOperationCancelledTwice_ThrowsConfigurationException()
     {
         // Act & Assert
-        var exception = Assert.Throws<UserContext.UserContextConfigurationException>(() =>
+        var exception = Assert.Throws<UserContextConfigurationException>(() =>
         {
             UserContext.Create(_repository, _userId)
                 .RequirePermission("READ")
-                .OnOperationCancelled(_ => Task.CompletedTask) // First configuration
-                .OnOperationCancelled(_ => Task.CompletedTask);
+                .OnOperationCancelled((_, _) => Task.CompletedTask) // First configuration
+                .OnOperationCancelled((_, _) => Task.CompletedTask);
         });
 
         Assert.Contains("OnOperationCancelled has already been configured", exception.Message, StringComparison.OrdinalIgnoreCase);
@@ -195,12 +197,12 @@ public class UserContextTests
     public void ConfiguringOnExceptionTwice_ThrowsConfigurationException()
     {
         // Act & Assert
-        var exception = Assert.Throws<UserContext.UserContextConfigurationException>(() =>
+        var exception = Assert.Throws<UserContextConfigurationException>(() =>
         {
             UserContext.Create(_repository, _userId)
                 .RequirePermission("READ")
-                .OnException((_, _) => Task.CompletedTask) // First configuration
-                .OnException((_, _) => Task.CompletedTask);
+                .OnException((_, _, _) => Task.CompletedTask) // First configuration
+                .OnException((_, _, _) => Task.CompletedTask);
         });
 
         // The specific error message expected depends on the implementation.
@@ -213,7 +215,7 @@ public class UserContextTests
     {
         var userContext = UserContext.Create(_repository, _userId);
 
-        var exception = await Assert.ThrowsAsync<UserContext.UserContextConfigurationException>(async () =>
+        var exception = await Assert.ThrowsAsync<UserContextConfigurationException>(async () =>
         {
             await userContext.ExecuteAsync();
         });
@@ -225,12 +227,12 @@ public class UserContextTests
     public async Task MissingOnPermissionGranted_ThrowsConfigurationExceptionAsync()
     {
         var repository = new InMemoryUserPermissionsRepository();
-        var userId = Guid.NewGuid();
+        var userId = Guid.NewGuid().ToString();
 
         var userContext = UserContext.Create(repository, userId)
             .RequirePermission("READ");
 
-        var exception = await Assert.ThrowsAsync<UserContext.UserContextConfigurationException>(async () =>
+        var exception = await Assert.ThrowsAsync<UserContextConfigurationException>(async () =>
         {
             await userContext.ExecuteAsync();
         });
@@ -243,13 +245,13 @@ public class UserContextTests
     public async Task MissingOnPermissionDenied_ThrowsConfigurationException()
     {
         var repository = new InMemoryUserPermissionsRepository();
-        var userId = Guid.NewGuid();
+        var userId = Guid.NewGuid().ToString();
 
         var userContext = UserContext.Create(repository, userId)
             .RequirePermission("READ")
-            .OnPermissionGranted(_ => Task.CompletedTask);
+            .OnPermissionGranted((_, _) => Task.CompletedTask);
 
-        var exception = await Assert.ThrowsAsync<UserContext.UserContextConfigurationException>(async () =>
+        var exception = await Assert.ThrowsAsync<UserContextConfigurationException>(async () =>
         {
             await userContext.ExecuteAsync();
         });
@@ -262,16 +264,16 @@ public class UserContextTests
     {
         // Arrange
         var repository = new InMemoryUserPermissionsRepository();
-        var userId = Guid.NewGuid();
+        var userId = Guid.NewGuid().ToString();
         repository.GrantPermission(userId, "READ");
 
         var cancellationTokenSource = new CancellationTokenSource();
         
         var userContext = UserContext.Create(repository, userId)
             .RequirePermission("READ")
-            .OnPermissionGranted(_ => Task.CompletedTask) // Simulate granted permission
-            .OnPermissionDenied(_ => Task.CompletedTask) // Include to pass configuration validation
-            .OnException((_, _) => Task.CompletedTask); // Include to pass configuration validation
+            .OnPermissionGranted((_, _) => Task.CompletedTask) // Simulate granted permission
+            .OnPermissionDenied((_, _) => Task.CompletedTask) // Include to pass configuration validation
+            .OnException((_, _, _) => Task.CompletedTask); // Include to pass configuration validation
 
         // Act
         cancellationTokenSource.Cancel(); // Trigger cancellation before execution

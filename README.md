@@ -12,32 +12,49 @@ AuthFlow is a versatile .NET library designed to streamline the authentication a
 
 ## Getting Started
 
-To get started with AuthFlow, first install the package via NuGet:
+To begin using AuthFlow in your project, install the package via NuGet:
 
 ```shell
 dotnet add package AsyncAuthFlowCore
 ```
 
-Then, you can configure a user context like so:
-```shell
-var userContext = AuthFlow.UserContext.Create(userPermissionsRepository, userId)
+### Configuring a User Context
+
+Create and configure a user context by specifying permissions and defining actions for various outcomes:
+
+```csharp
+var userContext = AuthFlow.UserContext.Create(userPermissionsRepository, "USER_ID")
     .RequirePermission("ADMIN_ACCESS")
-    .OnPermissionGranted(async cancellationToken =>
+    .OnPermissionGranted(async (userId, cancellationToken) =>
     {
+        Console.WriteLine($"Permission Granted for {userId}.");
         // Code to execute when permission is granted
     })
-    .OnPermissionDenied(async cancellationToken =>
+    .OnPermissionDenied(async (userId, cancellationToken) =>
     {
+        Console.WriteLine($"Permission Denied for {userId}.");
         // Code to execute when permission is denied
     })
-    .OnException(async (exception, cancellationToken) =>
+    .OnException(async (exception, userId, cancellationToken) =>
     {
+        Console.WriteLine($"Exception occurred for {userId}: {exception.Message}");
         // Exception handling code
     })
     .ExecuteAsync();
 ```
+
+This example demonstrates setting up a user context with the required `ADMIN_ACCESS` permission. It configures actions to handle permission grants, denials, and exceptions.
+
+## Usage Scenarios
+
+- **Web Applications**: Secure endpoints or actions based on user roles and permissions.
+- **Background Services**: Ensure background tasks or jobs run with the appropriate user permissions.
+- **Microservices**: Apply user context in inter-service communication to maintain security and permission checks.
+
 ## Contributing
-We welcome contributions to AuthFlow! If you have suggestions, bug reports, or would like to contribute code, please submit an issue or pull request on GitHub.
+
+We welcome contributions to AuthFlow! If you have suggestions, bug reports, or would like to contribute code, please submit an issue or pull request on GitHub. Your input helps make AuthFlow even better.
 
 ## License
-AuthFlow is released under the MIT License. See the LICENSE file for more details.
+
+AuthFlow is released under the MIT License. See the LICENSE file in the repository for more details.
